@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Simple Issue Hunter</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css" integrity="sha384-9gVQ4dYFwwWSjIDZnLEWnxCjeSWFphJiwGPXr1jddIhOegiu1FwO5qRGvFXOdJZ4" crossorigin="anonymous">
+  <style>
+    @import url('https://fonts.googleapis.com/css?family=Montserrat:400,700');
+    body {
+      padding-top: 20px;
+      padding-bottom: 20px;
+      overflow-y: scroll;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 14px;
+    }
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 700;
+    }
+    a {
+      color: #222831;
+    }
+    a:hover {
+      text-decoration: none;
+      color: #393E46;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .header,
+    .marketing,
+    .footer {
+      padding-right: 15px;
+      padding-left: 15px;
+    }
+    .header {
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e5e5e5;
+    }
+    .header h3 {
+      margin-top: 0;
+      margin-bottom: 0;
+      line-height: 40px;
+    }
+    .footer {
+      padding-top: 19px;
+      color: #777;
+      border-top: 1px solid #e5e5e5;
+    }
+    .container-narrow>hr {
+      margin: 30px 0;
+    }
+    .marketing {
+      margin: 40px 0;
+    }
+    .marketing p+h4 {
+      margin-top: 28px;
+    }
+    @media screen and (min-width: 768px) {
+      .header,
+      .marketing,
+      .footer {
+        padding-right: 0;
+        padding-left: 0;
+      }
+      .header {
+        margin-bottom: 30px;
+      }
+      .container {
+        max-width: 730px;
+      }
+    }
+  </style>
+
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+    crossorigin="anonymous"></script>
+
+  <script>
+    $(function () {
+      $('#seachbutton').on('click', function (e) {
+        e.preventDefault();
+
+        var username = $('#ghusername').val();
+        var url = 'https://api.github.com/users/' + username + '/events?per_page=100&event=IssuesEvent';
+
+        requestJSON(url, function(response){
+          if (response.message == "Not Found" || response == '') {
+            $('#results').html("<h2>No Info</h2>");
+          }
+
+          else {
+            var username = response[0].actor.login;
+            var avatar = response[0].actor.avatar_url;
+
+            var resultHtml = `
+            <div class="media">
+              <img class="rounded-circle mr-3" src="${avatar}" alt="${username}" style="width:48px">
+              <div class="media-body">
+                <h3 class="mt-0"><a href="https://www.github.com/${username}" target="_blank">${username}</h3>
+              </div>
+            </div>
+            `;
+
+            resultHtml += `<ul>`;
+              $.each(response, function (index) {
+                if (response[index].type == "IssuesEvent") {
+                  let issue = response[index].payload.issue
+                  resultHtml += `
+                    <hr>
+                      <li>
+                        <h6><a href="${issue.html_url}" target="_blank">${issue.title}</a></h6>
+                        <p>${issue.body ? (issue.body).substring(0,240) : "No text"}...</p>
+                        <p class="card-subtitle mb-2 mt-2 text-muted">${(issue.created_at).substring(0, 10)}</p>
+                      </li>  
+                  `
+                }
+              });
+              resultHtml += `</ul>`;
+              
+              $('#results').html(resultHtml);
+
+          }
+        });
+      });
+
+      function requestJSON(url, callback) {
+        $.ajax({
+          url: url,
+          complete: function (xhr) {
+            callback.call(null, xhr.responseJSON);
+          }
+        });
+      }
+    });
+  </script>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header clearfix">
+      <h3 class="text-muted">Simple Issue Hunter</h3>
+    </div>
+
+    <div class="row marketing">
+      <div class="input-group">
+        <input type="text" class="form-control" name="ghusername" id="ghusername" placeholder="Github username?">
+        <span class="input-group-append">
+          <button id="seachbutton" class="btn btn-outline-secondary" type="button">Search!</button>
+        </span>
+      </div>
+    </div>
+
+    <div id="results"></div>
+
+    <footer class="footer">
+      <p>Created by Oups</p>
+    </footer>
+  </div>
+</body>
+
+</html>
